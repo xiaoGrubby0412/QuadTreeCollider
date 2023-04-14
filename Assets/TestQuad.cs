@@ -8,6 +8,7 @@ public class TestQuad : MonoBehaviour
     List<RectTransform> rectTransforms;
     List<LineRenderer> lineRenderers;
     public int cNums = 200;
+    public bool IfUseQuadTree = true;
 
     private void Start()
     {
@@ -33,8 +34,8 @@ public class TestQuad : MonoBehaviour
             rectTransforms.Add(rectT);
         }
     }
-
-    private void Update()
+    
+    private void UpdateByQuadTree()
     {
         //清理树
         quadTree.Clear();
@@ -72,5 +73,45 @@ public class TestQuad : MonoBehaviour
         {
             lineRenderers[linet++].gameObject.SetActive(false);
         }
+    }
+
+    public void UpdateNoQuadTree()
+    {
+        int linet = 0;
+        for (int i = 0; i < rectTransforms.Count; i++)
+        {
+            if (linet == lineRenderers.Count)
+            {
+                GameObject go = new GameObject("line_" + linet);
+                lineRenderers.Add(go.AddComponent<LineRenderer>());
+            }
+            LineRenderer lineRenderer = lineRenderers[linet++];
+            lineRenderer.gameObject.SetActive(true);
+            lineRenderer.positionCount = 0;
+            for (int j = i + 1; j < rectTransforms.Count; j++)
+            {
+                Rect rect1 = QuadTree.GetRect(rectTransforms[i]);
+                Rect rect2 = QuadTree.GetRect(rectTransforms[j]);
+                if (rect1.Overlaps(rect2))
+                {
+                    lineRenderer.SetPosition(lineRenderer.positionCount++, rectTransforms[i].position + new Vector3(0, 0, -1));
+                    lineRenderer.SetPosition(lineRenderer.positionCount++, rectTransforms[j].position + new Vector3(0, 0, -1));
+                }
+            }
+        }
+
+        while (linet < lineRenderers.Count)
+        {
+            lineRenderers[linet++].gameObject.SetActive(false);
+        }
+
+    }
+
+    private void Update()
+    {
+        if(IfUseQuadTree)
+            UpdateByQuadTree();
+        else
+            UpdateNoQuadTree();
     }
 }
